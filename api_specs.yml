@@ -1,0 +1,358 @@
+openapi: 3.0.0
+info:
+  version: "1.0.0"
+  title: Gods work API
+paths:
+  /register:
+    post:
+      tags:
+        - auth
+      summary: Register User 
+      operationId: register
+      responses:
+        '201':
+          description: registered successully
+        '400':
+          description: 'invalid input, object invalid'
+        '409':
+          description: event already exists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/Credentials'
+              - $ref: '#/components/schemas/Participant'
+              - type: object
+                properties:
+                  address:
+                    $ref: '#/components/schemas/Address'
+  /login:
+    post:
+      tags:
+        - auth
+      summary: Login User 
+      operationId: login
+      responses:
+        '200':
+          description: Login successully
+        '400':
+          description: 'invalid input, object invalid'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+  /event:
+    post:
+      tags:
+        - eventCRUD
+      summary: create event 
+      operationId: createEvent
+      description: Adds new event add participant
+      responses:
+        '201':
+          description: event created
+        '400':
+          description: 'invalid input, object invalid'
+        '409':
+          description: event already exists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+    get:
+      tags:
+        - eventCRUD
+      summary: list of events
+      operationId: eventlist
+      description: |
+        By passing in the appropriate options, you can search for
+        available inventory in the system
+      parameters:
+        - in: query
+          name: skip
+          description: number of records to skip for pagination
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - in: query
+          name: limit
+          description: maximum number of records to return
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 50
+        - in: query
+          name: status
+          description: | 
+            status is required based on status user can filter 
+            Open event,attending event, own event
+          required: true
+          schema:
+            type: string
+            enum:
+              - open
+              - attending
+              - own
+              - invited
+      responses:
+        '200':
+          description: search results matching criteria
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+        '400':
+          description: bad input parameter        
+  /event/{id}:
+    get:
+      tags:
+        - eventCRUD
+      summary: Event details
+      operationId: eventdetail
+      description: |
+        who is attending event,Organiser contact details,
+      parameters:
+        - in: path
+          name: id
+          description: event detail
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: search results matching criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: bad input parameter
+  /event/{id}/accept:
+    patch:
+      tags:
+        - eventOperations
+      summary: accept event
+      operationId: acceptEvent
+      description: |
+        Only opened events can be accepted
+      parameters:
+        - in: path
+          name: id
+          description: event uuid
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: status changed sucessfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sucess'
+        '400':
+          description: Error while changing event state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /event/{id}/decline:
+    patch:
+      tags:
+        - eventOperations
+      summary: decline event
+      operationId: declineEvent
+      description: |
+        Only accepted events can be decline
+      parameters:
+        - in: path
+          name: id
+          description: event uuid
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: status changed sucessfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sucess'
+        '400':
+          description: Error while changing event state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /event/{id}/invite/{participantId}:
+    patch:
+      tags:
+        - eventOperations
+      summary: invite participants to attend event
+      operationId: inviteParticipant
+      description: |
+        Only organiser of an event can send invite
+      parameters:
+        - in: path
+          name: id
+          description: event uuid
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: participantId
+          description: participantId uuid
+          required: true
+          schema:
+            type: string            
+      responses:
+        '200':
+          description: status changed sucessfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sucess'
+        '400':
+          description: Error while changing event state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'                                                            
+components:
+  schemas:
+    Sucess:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string          
+    Event:
+      type: object
+      required:
+        - id
+        - eventType
+        - dateandtime
+        - participant_amount
+        - address
+      properties:
+        id:
+          type: string
+          readOnly: true
+          format: string
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+        eventType:
+          type: string
+          example: Vastushant,Satyanarayan
+        dateandtime:
+          type: string
+          format: date-time
+          example: '2023-12-15T08:03:47+0000'
+        requiredParticipants:
+          type: number
+        totalAmount:
+          type: number
+        participant_amount:
+          type: number                    
+        address:
+          $ref: '#/components/schemas/Address'
+        attendees:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/Participant'
+        organiser:
+          type: object
+          readOnly: true
+          $ref: '#/components/schemas/Participant'
+        creater:
+          type: object
+          $ref: '#/components/schemas/Participant'
+    Address:
+      type: object
+      required:
+        - houseUnitNumber
+        - streetName
+        - area
+        - landmark
+        - latitude
+        - longitude
+        - city
+        - state
+        - country
+      properties:
+        houseUnitNumber:
+          type: string
+          example: A1-602                    
+        streetName:
+          type: string
+          example: DSK-vishwa-road
+        area:
+          type: string
+          example: DSK-vishwa-road
+        landmark:
+          type: string
+          example: DSK-vishwa-road
+        cityOrVillage:
+          type: string
+          example: Pune          
+        state:
+          type: string
+          example: Maharashtra
+        country:
+          type: string
+          example: India
+        latitude:
+          type: integer
+          example: 18.4432
+        longitude:
+          type: integer
+          example: 73.7987          
+    Participant:
+      type: object
+      required:
+        - name
+        - mobileNumber
+        - whatappNumber
+      properties:
+        name:
+          type: string
+          example: Vighnesh Dandekar
+        mobileNumber:
+          type: string
+          example: "8600363676"
+        whatappNumber:
+          type: string
+          example: "8600363676"                    
+        id:
+          readOnly: true
+          type: string
+          format: uuid
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+    Credentials:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/vighneshdandekar/godswork/1.0.0

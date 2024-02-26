@@ -1,0 +1,103 @@
+org: ${file(./config.yml):org}
+app: ${file(./config.yml):app}
+service: godswork-api
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  region: ap-south-1
+  runtime: python3.9
+  environment:
+    USER_TABLE: ${self:service}-${opt:stage, self:provider.stage, 'dev'}-users
+    EVENTS_TABLE: ${self:service}-${opt:stage, self:provider.stage, 'dev'}-events
+    AWS_ID: ${file(./config.yml):AWS_ACCESS_KEY_ID}
+    AWS_KEY: ${file(./config.yml):AWS_SECRET_ACCESS_KEY}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.USER_TABLE}
+            - arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.EVENTS_TABLE}
+functions:
+  authorize:
+    handler: authentication/authorizer.authorize
+
+  register:
+    handler: authentication/register.register
+    events:
+      - http:
+          path: authentication/register
+          method: post
+          cors: true
+  login:
+    handler: authentication/login.login
+    events:
+      - http:
+          path: authentication/login
+          method: post
+          cors: true
+
+  create-event:
+    handler: events/create_event.create
+    events:
+      - http:
+          path: events
+          method: post
+          cors: true
+          authorizer: authorize
+  get-event:
+    handler: events/get_event.get
+    events:
+      - http:
+          path: events
+          method: get
+          cors: true
+          authorizer: authorize
+  get-id-event:
+    handler: events/get_event_id.get_event
+    events:
+      - http:
+          path: events/{id}
+          method: get
+          cors: true
+          authorizer: authorize
+
+resources:
+  Resources:
+    UsersDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.USER_TABLE}
+    EventsDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.EVENTS_TABLE}
