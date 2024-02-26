@@ -1,3 +1,17 @@
+.serverless
+*.pyc
+*.pyo
+config.yml
+
+# Ignore VSCode settings
+.vscode
+
+/__pycache__/
+/.pytest_cache/
+/vendor/
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
