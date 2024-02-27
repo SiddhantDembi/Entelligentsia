@@ -5,9 +5,9 @@ This project is a demonstration of a Python-based application utilizing AWS serv
 To set up the project locally, follow these steps:
 
 Clone the repository from GitHub:
-bash
-Copy code
+
 git clone https://github.com/your_username/project_name.git
+
 Install dependencies:
 bash
 Copy code
