@@ -6,13 +6,17 @@ To set up the project locally, follow these steps:
 
 Clone the repository from GitHub:
 
-git clone https://github.com/your_username/project_name.git
+````bash
+https://github.com/SiddhantDembi/Entelligentsia.git
+````
 
 Install dependencies:
-bash
-Copy code
+
+````bash
 cd project_name
 pip install -r requirements.txt
+````
+
 Set up AWS credentials and configure the AWS CLI if you haven't already.
 
 Configure your AWS DynamoDB tables according to the schema defined in the project.
