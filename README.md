@@ -1,5 +1,8 @@
 # Entelligentsia
 
+## Overview
+This backend project was developed during an internship at Entelligentsia. It was implemented using Python, AWS Lambda, AWS DynamoDB, and the Serverless Framework. The project encompasses APIs for functionalities such as login, registration, retrieving events, and posting events.
+
 ## Prerequisites
 Before proceeding with this project, ensure the following prerequisites are met:
 
